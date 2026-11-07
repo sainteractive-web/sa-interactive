@@ -3,7 +3,7 @@
 
 /* Fixed atmospheric canvas: GSAP fades these layers as the page scrolls. */
 body{position:relative;isolation:isolate;background:#07111d}
-.journey-backdrop{position:fixed;z-index:0;inset:0;overflow:hidden;pointer-events:none;background-color:#08111e;background-image:linear-gradient(180deg,rgba(3,8,16,.48),rgba(3,8,16,.34) 42%,rgba(3,8,16,.58)),url("../assets/cosmic-ocean-galaxy.png");background-size:cover;background-position:center center;background-repeat:no-repeat}
+.journey-backdrop{position:fixed;z-index:0;inset:0;overflow:hidden;pointer-events:none;background-color:#08111e;background-image:linear-gradient(180deg,rgba(3,8,16,.48),rgba(3,8,16,.34) 42%,rgba(3,8,16,.58)),url("../assets/cosmic-ocean-galaxy.jpg");background-size:cover;background-position:center center;background-repeat:no-repeat}
 body>header,body>main,body>footer{position:relative;z-index:1}
 .journey-ocean,.journey-rays,.journey-particles,.journey-stars,.journey-nebula{position:absolute;inset:-8%;pointer-events:none}
 .journey-ocean{opacity:1;background:radial-gradient(ellipse at 18% 34%,rgba(17,105,128,.22),transparent 48%),radial-gradient(ellipse at 76% 62%,rgba(12,62,86,.25),transparent 52%)}

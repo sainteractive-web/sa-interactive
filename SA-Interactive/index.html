@@ -6,17 +6,17 @@
     <meta name="theme-color" content="#090a0b" />
     <meta name="description" content="SA Interactive is a digital web design studio creating modern, responsive and interactive websites for businesses." />
     <title>SA Interactive — Digital Experiences That Inspire</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles/main.css" />
     <link rel="stylesheet" href="styles/hero.css" />
-    <script>document.documentElement.classList.add("js");</script>
     <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="scripts/supabase-config.js"></script>
     <script defer src="scripts/main.js"></script>
+    <script id="supabase-sdk" async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <div class="journey-backdrop" aria-hidden="true">
@@ -73,7 +73,7 @@
           <div class="project-grid project-grid-single">
             <article class="project-card project-ocean" aria-labelledby="ocean-world-title">
               <a class="ocean-featured-image" href="assets/ocean-world-ornamental-fish-banner.png" target="_blank" rel="noopener noreferrer" aria-label="View the Ocean World Aquarium ornamental fish banner at full size">
-                <img src="assets/ocean-world-ornamental-fish-banner.png" alt="Ocean World Aquarium banner concept with vibrant ornamental fish beneath the water" width="1536" height="1024" fetchpriority="high" />
+                <img src="assets/ocean-world-ornamental-fish-banner.png" alt="Ocean World Aquarium banner concept with vibrant ornamental fish beneath the water" width="1536" height="1024" loading="lazy" decoding="async" />
                 <span class="project-open" aria-hidden="true">↗</span>
               </a>
               <div class="project-meta"><div><h3 id="ocean-world-title">Ocean World Aquarium</h3><p>Aquarium &amp; Pet Shop · Concept project</p></div><span class="project-number">02</span></div>
@@ -99,10 +99,10 @@
               </div>
               <div class="branding-artwork">
                 <figure class="branding-image branding-banner">
-                  <img src="assets/sha-al-haq-banner.png" alt="Sha’ Al Haq personal brand banner design" loading="lazy" />
+                  <img src="assets/sha-al-haq-banner.png" alt="Sha’ Al Haq personal brand banner design" width="1536" height="432" loading="lazy" decoding="async" />
                 </figure>
                 <figure class="branding-image branding-logo">
-                  <img src="assets/sha-al-haq-logo.png" alt="Sha’ Al Haq original logo design" loading="lazy" />
+                  <img src="assets/sha-al-haq-logo.png" alt="Sha’ Al Haq original logo design" width="1536" height="1536" loading="lazy" decoding="async" />
                 </figure>
               </div>
               <div class="project-meta"><div><h3 id="sha-al-haq-title">Sha’ Al Haq — Logo &amp; Banner Design</h3><p>Personal branding concept</p></div><span class="project-number">03</span></div>

@@ -1,3 +1,5 @@
+document.documentElement.classList.add("js");
+
 const menuButton = document.querySelector(".menu-toggle");
 const primaryNav = document.querySelector(".primary-nav");
 
@@ -52,8 +54,22 @@ function initializeSupabaseClient() {
   }
 }
 
-const supabaseSetup = initializeSupabaseClient();
+let supabaseSetup = initializeSupabaseClient();
 window.saSupabaseClient = supabaseSetup.client;
+
+const supabaseSdk = document.querySelector("#supabase-sdk");
+const supabaseReady = supabaseSetup.status === "sdk-unavailable" && supabaseSdk
+  ? new Promise((resolve) => {
+      const finish = () => {
+        supabaseSetup = initializeSupabaseClient();
+        window.saSupabaseClient = supabaseSetup.client;
+        resolve(supabaseSetup);
+      };
+      supabaseSdk.addEventListener("load", finish, { once: true });
+      supabaseSdk.addEventListener("error", finish, { once: true });
+      if (window.supabase?.createClient) finish();
+    })
+  : Promise.resolve(supabaseSetup);
 
 if (contactForm && formNote) {
   const submitButton = contactForm.querySelector('button[type="submit"]');
@@ -65,6 +81,8 @@ if (contactForm && formNote) {
 
     if (isSubmitting) return;
 
+    const activeSupabaseSetup = await supabaseReady;
+
     const setupMessages = {
       "missing-config": "Add your Supabase Project URL and Publishable Key in scripts/supabase-config.js before connecting this form.",
       "sdk-unavailable": "The Supabase client could not be loaded. Check your network connection and try again.",
@@ -73,8 +91,8 @@ if (contactForm && formNote) {
       "initialization-error": "Supabase could not be initialized. Check the Project URL and Publishable Key.",
     };
 
-    if (supabaseSetup.status !== "initialized") {
-      formNote.textContent = setupMessages[supabaseSetup.status] ?? "Supabase is not ready. Check the connection settings.";
+    if (activeSupabaseSetup.status !== "initialized") {
+      formNote.textContent = setupMessages[activeSupabaseSetup.status] ?? "Supabase is not ready. Check the connection settings.";
       return;
     }
 
@@ -129,7 +147,7 @@ if (contactForm && formNote) {
   });
 }
 
-async function initHeroFilm() {
+function initHeroFilm() {
   const hero = document.querySelector(".hero");
   const field = document.querySelector(".fragment-field");
   const monogram = document.querySelector(".monogram-frame");
@@ -142,19 +160,6 @@ async function initHeroFilm() {
     hero.classList.add("hero-static");
     return;
   }
-
-  if (document.readyState !== "complete") {
-    await new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
-  }
-  if (document.fonts?.ready) await document.fonts.ready;
-  await Promise.all(Array.from(document.images, (image) => {
-    if (image.complete) return Promise.resolve();
-    return typeof image.decode === "function" ? image.decode().catch(() => {}) : new Promise((resolve) => {
-      image.addEventListener("load", resolve, { once: true });
-      image.addEventListener("error", resolve, { once: true });
-    });
-  }));
-  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
   // A repeated call must not create a second matchMedia context or trigger set.
   if (hero.dataset.animationInitialized === "true") return;
@@ -212,7 +217,7 @@ async function initHeroFilm() {
       const isMobile = context.conditions.mobile;
       const fragmentCount = isMobile ? 18 : 52;
       const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 68;
-      hero.classList.toggle("hero-ready", !isMobile);
+      hero.classList.add("hero-ready");
       hero.classList.toggle("hero-mobile", isMobile);
 
       for (let index = 0; index < fragmentCount; index += 1) {
@@ -234,18 +239,20 @@ async function initHeroFilm() {
       }
 
       if (isMobile) {
-        gsap.timeline({
+        const timeline = gsap.timeline({
           scrollTrigger: {
             trigger: hero,
             start: `top top+=${headerHeight}`,
-            end: "+=100%",
+            end: "+=160%",
             pin: true,
             pinSpacing: true,
-            scrub: 0.65,
+            scrub: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
-        })
+        });
+
+        timeline
           .to(monogram, { opacity: 0.28, scale: 0.9, duration: 0.9, ease: "none" }, 0)
           .to(field.children, {
             opacity: 0.78,
@@ -255,7 +262,17 @@ async function initHeroFilm() {
             stagger: { each: 0.006, from: "random" },
             duration: 0.9,
             ease: "none",
-          }, 0.12);
+          }, 0.12)
+          .to(".film-instruction", { autoAlpha: 0, duration: 0.1 }, 0.76);
+
+        const revealDuration = 0.22;
+        const revealStart = Math.max(timeline.duration() - revealDuration, 0.78);
+        timeline.fromTo(
+          content,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: revealDuration, ease: "power1.out", immediateRender: false },
+          revealStart,
+        );
       } else {
         const timeline = gsap.timeline({
           scrollTrigger: {
@@ -304,9 +321,24 @@ async function initHeroFilm() {
     },
   );
 
-  // The initial refresh includes the final font and asset dimensions, avoiding stale pin offsets.
-  requestAnimationFrame(() => ScrollTrigger.refresh());
-  document.fonts?.addEventListener("loadingdone", () => ScrollTrigger.refresh());
+  // Refresh after late fonts and lazy images without making hero setup wait for them.
+  let refreshQueued = false;
+  const refreshAfterLayoutChange = () => {
+    if (refreshQueued) return;
+    refreshQueued = true;
+    requestAnimationFrame(() => {
+      refreshQueued = false;
+      if (hero.isConnected) ScrollTrigger.refresh();
+    });
+  };
+
+  requestAnimationFrame(() => requestAnimationFrame(refreshAfterLayoutChange));
+  document.fonts?.ready?.then(refreshAfterLayoutChange);
+  document.querySelectorAll("img").forEach((image) => {
+    if (image.complete) return;
+    image.addEventListener("load", refreshAfterLayoutChange, { once: true });
+    image.addEventListener("error", refreshAfterLayoutChange, { once: true });
+  });
 }
 
 initHeroFilm();
