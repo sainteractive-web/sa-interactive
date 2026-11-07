@@ -1,0 +1,312 @@
+const menuButton = document.querySelector(".menu-toggle");
+const primaryNav = document.querySelector(".primary-nav");
+
+if (menuButton && primaryNav) {
+  const closeMenu = () => {
+    menuButton.setAttribute("aria-expanded", "false");
+    menuButton.setAttribute("aria-label", "Open navigation");
+    primaryNav.classList.remove("is-open");
+  };
+
+  menuButton.addEventListener("click", () => {
+    const isOpen = menuButton.getAttribute("aria-expanded") === "true";
+    menuButton.setAttribute("aria-expanded", String(!isOpen));
+    menuButton.setAttribute("aria-label", isOpen ? "Open navigation" : "Close navigation");
+    primaryNav.classList.toggle("is-open", !isOpen);
+  });
+
+  primaryNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMenu();
+  });
+}
+
+const year = document.querySelector("#year");
+if (year) year.textContent = String(new Date().getFullYear());
+
+const contactForm = document.querySelector("#contact-form");
+const formNote = document.querySelector("#form-note");
+
+function initializeSupabaseClient() {
+  const config = window.SA_SUPABASE_CONFIG ?? {};
+  const projectUrl = typeof config.projectUrl === "string" ? config.projectUrl.trim() : "";
+  const publishableKey = typeof config.publishableKey === "string" ? config.publishableKey.trim() : "";
+
+  if (!projectUrl || !publishableKey) return { status: "missing-config", client: null };
+  if (!window.supabase?.createClient) return { status: "sdk-unavailable", client: null };
+  if (!publishableKey.startsWith("sb_publishable_")) return { status: "invalid-key", client: null };
+
+  try {
+    const parsedUrl = new URL(projectUrl);
+    if (parsedUrl.protocol !== "https:") return { status: "invalid-url", client: null };
+
+    return {
+      status: "initialized",
+      client: window.supabase.createClient(projectUrl, publishableKey),
+    };
+  } catch {
+    return { status: "initialization-error", client: null };
+  }
+}
+
+const supabaseSetup = initializeSupabaseClient();
+window.saSupabaseClient = supabaseSetup.client;
+
+if (contactForm && formNote) {
+  const submitButton = contactForm.querySelector('button[type="submit"]');
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let isSubmitting = false;
+
+  contactForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (isSubmitting) return;
+
+    const setupMessages = {
+      "missing-config": "Add your Supabase Project URL and Publishable Key in scripts/supabase-config.js before connecting this form.",
+      "sdk-unavailable": "The Supabase client could not be loaded. Check your network connection and try again.",
+      "invalid-key": "Supabase needs a Publishable Key that starts with sb_publishable_. Check scripts/supabase-config.js.",
+      "invalid-url": "The Supabase Project URL must use HTTPS. Check scripts/supabase-config.js.",
+      "initialization-error": "Supabase could not be initialized. Check the Project URL and Publishable Key.",
+    };
+
+    if (supabaseSetup.status !== "initialized") {
+      formNote.textContent = setupMessages[supabaseSetup.status] ?? "Supabase is not ready. Check the connection settings.";
+      return;
+    }
+
+    const formData = new FormData(contactForm);
+    const submission = {
+      name: String(formData.get("name") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      project: String(formData.get("project") ?? "").trim(),
+    };
+
+    if (submission.name.length < 1 || submission.name.length > 120) {
+      formNote.textContent = "Please enter a name of 1 to 120 characters.";
+      return;
+    }
+    if (submission.email.length > 254 || !emailPattern.test(submission.email)) {
+      formNote.textContent = "Please enter a valid email address.";
+      return;
+    }
+    if (submission.project.length < 1 || submission.project.length > 5000) {
+      formNote.textContent = "Please enter a project message of 1 to 5000 characters.";
+      return;
+    }
+
+    isSubmitting = true;
+    if (submitButton) submitButton.disabled = true;
+    formNote.textContent = "Sending your message…";
+
+    try {
+      const { error } = await window.saSupabaseClient
+        .from("contact_submissions")
+        .insert(submission);
+
+      if (error) throw error;
+
+      contactForm.reset();
+      formNote.textContent = "Your message has been sent. Thank you.";
+    } catch (error) {
+      console.error("[SA Interactive] Contact submission failed.", error?.code ?? "unknown error");
+      const submissionErrors = {
+        "42501": "The database is not allowing this submission yet. Please contact us another way while we resolve the form setup.",
+        "23514": "Please check your name, email address, and project message, then try again.",
+        "PGRST205": "The contact form table is not available through the Supabase Data API yet. Please try again later.",
+      };
+      formNote.textContent = submissionErrors[error?.code]
+        ?? (error instanceof TypeError
+          ? "We couldn’t reach the form service. Check your internet connection and try again."
+          : "We couldn’t save your message. Please try again in a moment.");
+    } finally {
+      isSubmitting = false;
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+}
+
+async function initHeroFilm() {
+  const hero = document.querySelector(".hero");
+  const field = document.querySelector(".fragment-field");
+  const monogram = document.querySelector(".monogram-frame");
+  const content = document.querySelector(".hero-content");
+
+  if (!hero || !field || !monogram || !content) return;
+
+  // Fail into the existing text hero if the CDN scripts cannot be loaded.
+  if (!window.gsap || !window.ScrollTrigger) {
+    hero.classList.add("hero-static");
+    return;
+  }
+
+  if (document.readyState !== "complete") {
+    await new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
+  }
+  if (document.fonts?.ready) await document.fonts.ready;
+  await Promise.all(Array.from(document.images, (image) => {
+    if (image.complete) return Promise.resolve();
+    return typeof image.decode === "function" ? image.decode().catch(() => {}) : new Promise((resolve) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", resolve, { once: true });
+    });
+  }));
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+  // A repeated call must not create a second matchMedia context or trigger set.
+  if (hero.dataset.animationInitialized === "true") return;
+  hero.dataset.animationInitialized = "true";
+
+  gsap.registerPlugin(ScrollTrigger);
+  const journeyBackdrop = document.querySelector(".journey-backdrop");
+  if (journeyBackdrop && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const ocean = journeyBackdrop.querySelector(".journey-ocean");
+    const rays = journeyBackdrop.querySelector(".journey-rays");
+    const particles = journeyBackdrop.querySelector(".journey-particles");
+    const stars = journeyBackdrop.querySelector(".journey-stars");
+    const nebula = journeyBackdrop.querySelector(".journey-nebula");
+    const main = document.querySelector("main");
+
+    if (main && ocean && rays && particles && stars && nebula) {
+      const journey = gsap.timeline({
+        scrollTrigger: {
+          trigger: main,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1.2,
+          invalidateOnRefresh: true,
+        },
+      });
+      journey
+        .to(ocean, { opacity: 0.18, duration: 0.72, ease: "none" }, 0)
+        .to(rays, { opacity: 0.04, duration: 0.55, ease: "none" }, 0)
+        .to(particles, { opacity: 0.08, duration: 0.6, ease: "none" }, 0.08)
+        .to(stars, { opacity: 0.78, duration: 0.76, ease: "none" }, 0.12)
+        .to(nebula, { opacity: 0.9, duration: 0.62, ease: "none" }, 0.42)
+        .to(ocean, { opacity: 0, duration: 0.25, ease: "none" }, 0.72);
+    }
+  }
+
+  const palette = [
+    ["#f5f3ec", "#858a90", "#45494e"],
+    ["#ffe6a1", "#bd914c", "#6f5127"],
+    ["#d7d8d4", "#9da0a2", "#5c6267"],
+  ];
+
+  const responsiveAnimations = gsap.matchMedia();
+  responsiveAnimations.add(
+    {
+      desktop: "(min-width: 901px)",
+      mobile: "(max-width: 900px)",
+      motionAllowed: "(prefers-reduced-motion: no-preference)",
+    },
+    (context) => {
+      if (!context.conditions.motionAllowed) {
+        hero.classList.add("hero-static");
+        return () => hero.classList.remove("hero-static");
+      }
+
+      const isMobile = context.conditions.mobile;
+      const fragmentCount = isMobile ? 18 : 52;
+      const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 68;
+      hero.classList.toggle("hero-ready", !isMobile);
+      hero.classList.toggle("hero-mobile", isMobile);
+
+      for (let index = 0; index < fragmentCount; index += 1) {
+        const shard = document.createElement("span");
+        const tones = palette[index % palette.length];
+        shard.className = "metal-fragment";
+        shard.setAttribute("aria-hidden", "true");
+        shard.style.setProperty("--size", `${7 + Math.random() * (isMobile ? 13 : 23)}px`);
+        shard.style.setProperty("--facet-a", tones[0]);
+        shard.style.setProperty("--facet-b", tones[1]);
+        shard.style.setProperty("--facet-c", tones[2]);
+        field.append(shard);
+        gsap.set(shard, {
+          x: gsap.utils.random(-118, 118),
+          y: gsap.utils.random(-78, 78),
+          rotation: gsap.utils.random(-35, 35),
+          scale: gsap.utils.random(0.45, 1.2),
+        });
+      }
+
+      if (isMobile) {
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: hero,
+            start: `top top+=${headerHeight}`,
+            end: "+=100%",
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.65,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        })
+          .to(monogram, { opacity: 0.28, scale: 0.9, duration: 0.9, ease: "none" }, 0)
+          .to(field.children, {
+            opacity: 0.78,
+            x: () => gsap.utils.random(-window.innerWidth * 0.28, window.innerWidth * 0.28),
+            y: () => gsap.utils.random(-window.innerHeight * 0.28, window.innerHeight * 0.28),
+            rotation: () => gsap.utils.random(-120, 120),
+            stagger: { each: 0.006, from: "random" },
+            duration: 0.9,
+            ease: "none",
+          }, 0.12);
+      } else {
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: hero,
+            start: "top top+=78",
+            end: "+=160%",
+            scrub: 0.65,
+            pin: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        timeline
+          .to(monogram, { scale: 1.04, duration: 0.12, ease: "power1.out" }, 0)
+          .to(monogram, { opacity: 0.2, scale: 0.82, rotation: -3, duration: 0.42, ease: "power1.inOut" }, 0.2)
+          .to(field.children, {
+            opacity: 0.68,
+            x: (index) => {
+              const direction = index % 2 ? 1 : -1;
+              return direction * gsap.utils.random(140, Math.min(window.innerWidth * 0.48, 620));
+            },
+            y: () => gsap.utils.random(-window.innerHeight * 0.44, window.innerHeight * 0.44),
+            rotation: () => gsap.utils.random(-260, 260),
+            scale: () => gsap.utils.random(0.7, 1.45),
+            stagger: { each: 0.006, from: "random" },
+            duration: 0.7,
+            ease: "power1.inOut",
+          }, 0.23)
+          .to(".film-instruction", { autoAlpha: 0, duration: 0.1 }, 0.72);
+
+        const revealDuration = 0.22;
+        const revealStart = Math.max(timeline.duration() - revealDuration, 0.72);
+        timeline.fromTo(
+          content,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: revealDuration, ease: "power1.out", immediateRender: false },
+          revealStart,
+        );
+      }
+
+      return () => {
+        hero.classList.remove("hero-ready", "hero-mobile");
+        field.replaceChildren();
+      };
+    },
+  );
+
+  // The initial refresh includes the final font and asset dimensions, avoiding stale pin offsets.
+  requestAnimationFrame(() => ScrollTrigger.refresh());
+  document.fonts?.addEventListener("loadingdone", () => ScrollTrigger.refresh());
+}
+
+initHeroFilm();

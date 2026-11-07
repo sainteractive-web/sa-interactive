@@ -1,0 +1,25 @@
+/* Scroll controlled hero film */
+.hero{isolation:isolate;min-height:calc(100svh - 78px);height:calc(100svh - 78px);padding:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 46%,#111213 0,#090a0b 54%)}
+.hero-glow{z-index:-1;inset:0;width:auto;height:auto;background:radial-gradient(ellipse at 50% 42%,rgba(188,158,99,.15),transparent 43%)}
+.hero-film{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;pointer-events:none;perspective:1000px}
+.monogram-frame{position:relative;z-index:1;width:min(76vw,740px);filter:drop-shadow(0 22px 38px rgba(0,0,0,.45));will-change:transform,opacity}
+.monogram{display:block;width:100%;overflow:visible}.monogram-letter{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:390px;letter-spacing:-55px;paint-order:stroke fill;stroke:rgba(255,255,255,.18);stroke-width:1.4px}.letter-s{font-style:italic}.letter-a{font-style:normal}
+.monogram-caption{position:absolute;left:50%;bottom:-12px;display:flex;align-items:center;gap:10px;transform:translateX(-50%);color:#aaa9a5;font-size:9px;letter-spacing:.28em;white-space:nowrap}.monogram-caption i{width:34px;height:1px;background:linear-gradient(90deg,var(--silver),var(--gold))}
+.fragment-field{position:absolute;inset:0;overflow:hidden;contain:paint}.metal-fragment{position:absolute;top:50%;left:50%;width:var(--size);height:var(--size);opacity:0;transform:translate(-50%,-50%);clip-path:polygon(50% 0,100% 100%,0 74%);background:linear-gradient(140deg,var(--facet-a),var(--facet-b) 45%,var(--facet-c));filter:drop-shadow(0 0 8px rgba(199,167,107,.2));will-change:transform,opacity}
+.film-instruction{position:absolute;left:50%;bottom:30px;margin:0;transform:translateX(-50%);color:#777;font-size:9px;letter-spacing:.2em;text-transform:uppercase}.film-instruction span{display:inline-block;margin-left:9px;color:var(--gold)}
+.hero-content{z-index:2;width:min(var(--container),calc(100% - 64px));text-align:center}.hero-content>.eyebrow{justify-content:center;margin-bottom:20px}.hero h1{font-size:clamp(50px,7.2vw,96px);line-height:.99}.hero-bottom{align-items:center;flex-direction:column;gap:19px;margin:25px auto 0}.hero-copy{max-width:510px}.hero-index{z-index:3;right:max(32px,calc((100vw - var(--container))/2));bottom:28px}
+.hero-ready .hero-content{opacity:0;visibility:hidden}.hero-ready .hero-film{visibility:visible}
+@media(min-width:901px){.hero{min-height:calc(100svh - 78px);height:calc(100svh - 78px)}}
+@media(max-width:900px){.hero{height:auto;min-height:calc(100svh - 68px);padding:62px 0 72px}.hero-content{position:relative;left:auto;top:auto;transform:none}.hero-ready .hero-content{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% - 48px)}.monogram-frame{width:min(88vw,600px)}.monogram-letter{font-size:390px}.film-instruction{bottom:18px}.hero-index{bottom:18px}.hero-content>.eyebrow{font-size:8px}.hero h1{font-size:clamp(47px,8.7vw,74px)}}
+@media(max-width:620px){.hero{min-height:calc(100svh - 68px);padding:44px 0 65px}.hero-ready .hero-content{width:calc(100% - 36px)}.hero h1{font-size:clamp(42px,10.8vw,64px)}.hero-bottom{margin-top:18px}.hero-copy{font-size:12px}.monogram-frame{width:min(100vw,480px)}.monogram-letter{font-size:400px}.monogram-caption{font-size:7px;bottom:-2px}.film-instruction{font-size:8px;bottom:13px}.hero-index{right:18px;bottom:14px}}
+@media(prefers-reduced-motion:reduce){.hero-ready .hero-content{opacity:1;visibility:visible}.hero-film{display:none!important}.hero{height:auto;min-height:0;padding:88px 0 80px}.hero-content{position:relative!important;inset:auto!important;transform:none!important}}
+
+/* Keep the logo and headline in separate states before deferred scripts initialize. */
+html.js .hero:not(.hero-static) .hero-content{opacity:0;visibility:hidden}
+html.js .hero-mobile .hero-content{opacity:1;visibility:visible}
+html.js .hero-static .hero-content{opacity:1;visibility:visible}
+html.js .hero-static .hero-film{display:none}
+html.js .hero-ready .hero-content{opacity:0;visibility:hidden}
+
+/* Let the page-wide atmosphere remain visible behind the pinned logo film. */
+.hero{background:transparent}
