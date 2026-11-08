@@ -8,13 +8,21 @@ const recipient = "sa.interactive.web@gmail.com";
 const sender = "onboarding@resend.dev";
 
 function corsHeaders(origin: string) {
-  const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-  if (!allowedOrigins.has(origin) && !isLocalOrigin) return null;
+  let normalizedOrigin: string;
+  try {
+    normalizedOrigin = new URL(origin.trim()).origin;
+  } catch {
+    return null;
+  }
+
+  const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizedOrigin);
+  if (!allowedOrigins.has(normalizedOrigin) && !isLocalOrigin) return null;
 
   return {
-    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Origin": normalizedOrigin,
     "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "600",
     "Vary": "Origin",
   };
 }
@@ -64,9 +72,11 @@ function textValue(value: unknown, maxLength: number): string | null {
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("origin") ?? "";
   const cors = corsHeaders(origin);
+  if (request.method === "OPTIONS") {
+    if (!cors) return new Response(null, { status: 403 });
+    return new Response(null, { status: 204, headers: cors });
+  }
   if (!cors) return new Response("Origin not allowed", { status: 403 });
-
-  if (request.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (request.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, cors);
 
   // This static site uses a publishable key rather than Supabase Auth JWTs.
