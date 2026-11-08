@@ -98,6 +98,7 @@ if (contactForm && formNote) {
 
     const formData = new FormData(contactForm);
     const submission = {
+      id: crypto.randomUUID(),
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       project: String(formData.get("project") ?? "").trim(),
@@ -127,8 +128,21 @@ if (contactForm && formNote) {
 
       if (error) throw error;
 
+      let emailNotificationFailed = false;
+      try {
+        const { error: notificationError } = await window.saSupabaseClient.functions.invoke(
+          "contact-notification",
+          { body: { id: submission.id } },
+        );
+        emailNotificationFailed = Boolean(notificationError);
+      } catch {
+        emailNotificationFailed = true;
+      }
+
       contactForm.reset();
-      formNote.textContent = "Your message has been sent. Thank you.";
+      formNote.textContent = emailNotificationFailed
+        ? "Your message was saved, but the studio email alert could not be sent. Please contact us directly if this is urgent."
+        : "Your message has been sent. Thank you.";
     } catch (error) {
       console.error("[SA Interactive] Contact submission failed.", error?.code ?? "unknown error");
       const submissionErrors = {

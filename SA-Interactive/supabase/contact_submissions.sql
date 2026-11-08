@@ -9,6 +9,9 @@ create table if not exists public.contact_submissions (
   name text not null,
   email text not null,
   project text not null,
+  email_notification_status text not null default 'pending',
+  constraint contact_submissions_email_notification_status
+    check (email_notification_status in ('pending', 'sending', 'sent')),
   created_at timestamptz not null default now(),
   constraint contact_submissions_name_length
     check (char_length(btrim(name)) between 1 and 120),
@@ -27,7 +30,7 @@ alter table public.contact_submissions enable row level security;
 -- the existing public contact form. There are no public read/update/delete grants.
 revoke all privileges on table public.contact_submissions from public, anon, authenticated;
 grant usage on schema public to anon;
-grant insert (name, email, project)
+grant insert (id, name, email, project)
   on table public.contact_submissions
   to anon;
 
