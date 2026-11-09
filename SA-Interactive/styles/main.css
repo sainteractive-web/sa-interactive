@@ -67,3 +67,4 @@ body>header,body>main,body>footer{position:relative;z-index:1}
 @media(max-width:800px){.ocean-project-details{grid-template-columns:1fr 1.4fr;row-gap:13px}.ocean-project-details div:last-child{grid-column:1/-1}}
 @media(max-width:620px){.ocean-project-gallery{grid-template-columns:1fr;gap:12px}.ocean-gallery-logo{width:min(100%,320px);justify-self:center}.ocean-project-details{grid-template-columns:1fr;gap:12px}.ocean-project-details div:last-child{grid-column:auto}.ocean-project-description{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.ocean-featured-image img,.ocean-gallery-image img{transition:none}}
+@media(max-width:700px){.journey-rays{animation:none}.site-header{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}}

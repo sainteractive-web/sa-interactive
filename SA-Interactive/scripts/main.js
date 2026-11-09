@@ -181,7 +181,7 @@ function initHeroFilm() {
 
   gsap.registerPlugin(ScrollTrigger);
   const journeyBackdrop = document.querySelector(".journey-backdrop");
-  if (journeyBackdrop && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (journeyBackdrop) {
     const ocean = journeyBackdrop.querySelector(".journey-ocean");
     const rays = journeyBackdrop.querySelector(".journey-rays");
     const particles = journeyBackdrop.querySelector(".journey-particles");
@@ -190,22 +190,48 @@ function initHeroFilm() {
     const main = document.querySelector("main");
 
     if (main && ocean && rays && particles && stars && nebula) {
-      const journey = gsap.timeline({
-        scrollTrigger: {
-          trigger: main,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1.2,
-          invalidateOnRefresh: true,
+      const journeyMedia = gsap.matchMedia();
+      journeyMedia.add(
+        {
+          mobile: "(max-width: 700px)",
+          desktop: "(min-width: 701px)",
+          motionAllowed: "(prefers-reduced-motion: no-preference)",
         },
-      });
-      journey
-        .to(ocean, { opacity: 0.18, duration: 0.72, ease: "none" }, 0)
-        .to(rays, { opacity: 0.04, duration: 0.55, ease: "none" }, 0)
-        .to(particles, { opacity: 0.08, duration: 0.6, ease: "none" }, 0.08)
-        .to(stars, { opacity: 0.78, duration: 0.76, ease: "none" }, 0.12)
-        .to(nebula, { opacity: 0.9, duration: 0.62, ease: "none" }, 0.42)
-        .to(ocean, { opacity: 0, duration: 0.25, ease: "none" }, 0.72);
+        (context) => {
+          if (!context.conditions.motionAllowed) return;
+
+          const isMobile = context.conditions.mobile;
+          const journey = gsap.timeline({
+            scrollTrigger: {
+              trigger: main,
+              start: "top top",
+              end: "bottom bottom",
+              scrub: isMobile ? true : 1.2,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          if (isMobile) {
+            // Stage mobile layer changes so no more than two full-screen layers
+            // animate together. Direct scrubbing avoids a lingering catch-up tween.
+            journey
+              .to(ocean, { opacity: 0.18, duration: 0.4, ease: "none" }, 0)
+              .to(rays, { opacity: 0.04, duration: 0.16, ease: "none" }, 0.4)
+              .to(stars, { opacity: 0.78, duration: 0.42, ease: "none" }, 0.4)
+              .to(particles, { opacity: 0.08, duration: 0.18, ease: "none" }, 0.6)
+              .to(ocean, { opacity: 0, duration: 0.15, ease: "none" }, 0.82)
+              .to(nebula, { opacity: 0.9, duration: 0.18, ease: "none" }, 0.82);
+          } else {
+            journey
+              .to(ocean, { opacity: 0.18, duration: 0.72, ease: "none" }, 0)
+              .to(rays, { opacity: 0.04, duration: 0.55, ease: "none" }, 0)
+              .to(particles, { opacity: 0.08, duration: 0.6, ease: "none" }, 0.08)
+              .to(stars, { opacity: 0.78, duration: 0.76, ease: "none" }, 0.12)
+              .to(nebula, { opacity: 0.9, duration: 0.62, ease: "none" }, 0.42)
+              .to(ocean, { opacity: 0, duration: 0.25, ease: "none" }, 0.72);
+          }
+        },
+      );
     }
   }
 
@@ -348,11 +374,8 @@ function initHeroFilm() {
 
   requestAnimationFrame(() => requestAnimationFrame(refreshAfterLayoutChange));
   document.fonts?.ready?.then(refreshAfterLayoutChange);
-  document.querySelectorAll("img").forEach((image) => {
-    if (image.complete) return;
-    image.addEventListener("load", refreshAfterLayoutChange, { once: true });
-    image.addEventListener("error", refreshAfterLayoutChange, { once: true });
-  });
+  // Page images declare intrinsic dimensions, so their load events do not need
+  // to trigger a global refresh. ScrollTrigger handles viewport resizes itself.
 }
 
 initHeroFilm();
