@@ -12,7 +12,7 @@
 @media(min-width:901px){.hero{min-height:calc(100svh - 78px);height:calc(100svh - 78px)}}
 @media(max-width:900px){.hero{height:auto;min-height:calc(100svh - 68px);padding:62px 0 72px}.hero-content{position:relative;left:auto;top:auto;transform:none}.hero-ready .hero-content{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% - 48px)}.monogram-frame{width:min(88vw,600px)}.monogram-letter{font-size:390px}.film-instruction{bottom:18px}.hero-index{bottom:18px}.hero-content>.eyebrow{font-size:8px}.hero h1{font-size:clamp(47px,8.7vw,74px)}}
 @media(max-width:620px){.hero{min-height:calc(100svh - 68px);padding:44px 0 65px}.hero-ready .hero-content{width:calc(100% - 36px)}.hero h1{font-size:clamp(42px,10.8vw,64px)}.hero-bottom{margin-top:18px}.hero-copy{font-size:12px}.monogram-frame{width:min(100vw,480px)}.monogram-letter{font-size:400px}.monogram-caption{font-size:7px;bottom:-2px}.film-instruction{font-size:8px;bottom:13px}.hero-index{right:18px;bottom:14px}}
-@media(max-width:900px){.metal-fragment{filter:none}}
+@media(max-width:900px){.metal-fragment{filter:none;will-change:auto}.monogram-letter{filter:none}.monogram-frame{filter:drop-shadow(0 14px 24px rgba(0,0,0,.4))}}
 @media(prefers-reduced-motion:reduce){.hero-ready .hero-content{opacity:1;visibility:visible}.hero-film{display:none!important}.hero{height:auto;min-height:0;padding:88px 0 80px}.hero-content{position:relative!important;inset:auto!important;transform:none!important}}
 
 /* Keep the logo and headline in separate states before deferred scripts initialize. */
